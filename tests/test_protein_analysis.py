@@ -1,7 +1,9 @@
 """Tests for deterministic protein sequence analysis helpers."""
 
 import unittest
+from pathlib import Path
 
+from src.app_services import export_sequence_results
 from src.protein_analysis import (
     build_comparison_export_text,
     build_summary_export_text,
@@ -19,6 +21,7 @@ from src.structure_viewer import (
     get_structure_style_choices,
     suggest_structure_choice,
 )
+from src.ui_content import build_report_open_link
 
 
 class ProteinAnalysisTests(unittest.TestCase):
@@ -114,6 +117,15 @@ class ProteinAnalysisTests(unittest.TestCase):
             suggest_structure_choice("EGFR"),
             "EGFR kinase domain (PDB: 1M17)",
         )
+
+    def test_export_sequence_results_rejects_missing_summary(self):
+        with self.assertRaises(ValueError):
+            export_sequence_results(None, "Example")
+
+    def test_build_report_open_link_targets_report_name(self):
+        html = build_report_open_link(Path("report.html"))
+        self.assertIn("/gradio_api/file=report.html", html)
+        self.assertIn("Open Rendered Report", html)
 
 
 if __name__ == "__main__":
