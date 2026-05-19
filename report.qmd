@@ -1,0 +1,302 @@
+---
+title: "ProteinLens: Protein Sequence Analysis Report"
+format:
+  html:
+    toc: true
+    code-fold: true
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Overview
+
+ProteinLens is a beginner-friendly bioinformatics project for exploring protein sequences with Python. It combines deterministic sequence analysis with optional AI-assisted explanation.
+
+::: {.callout-note}
+## Important Note
+Amino acid composition is only a basic sequence-level analysis. It does not prove protein function or drug relevance.
+:::
+
+# Why Protein Sequence Analysis Matters
+
+Protein sequences are central to biochemistry because they connect directly to structure, function, enzyme activity, and drug targeting. This project focuses on simple, explainable analysis steps that are appropriate for a learning workflow.
+
+# Project Goals
+
+This project was designed to help a learner practice three ideas together:
+
+1. parse biological sequence input with Python
+2. summarize and visualize results in a transparent way
+3. use AI carefully as an explanation layer rather than as a replacement for computation
+
+# Input Sequence
+
+The example input used in this report comes from `data/example_protein.fasta`.
+
+```{python}
+from pathlib import Path
+import pandas as pd
+
+example_text = Path("data/example_protein.fasta").read_text()
+sequence_lines = example_text.strip().splitlines()
+sequence_preview = "\n".join(sequence_lines[:3])
+print(sequence_preview)
+```
+
+# Methods
+
+The workflow used in this project is:
+
+1. Parse FASTA or plain protein sequence input.
+2. Clean whitespace and normalize capitalization.
+3. Validate the sequence against standard one-letter amino acid codes.
+4. Calculate amino acid counts and percentages.
+5. Visualize the composition.
+6. Generate a cautious interpretation template.
+7. Optionally generate an AI explanation from summary statistics.
+
+```{python}
+from src.protein_analysis import summarize_protein_sequence
+
+summary = summarize_protein_sequence(example_text)
+
+methods_snapshot = {
+    "Input type": summary["input_type"],
+    "Sequence length": summary["sequence_length"],
+    "Unique amino acids detected": summary["unique_amino_acids_detected"],
+    "Most common amino acid": summary["most_common_amino_acid"],
+}
+
+pd.DataFrame(
+    methods_snapshot.items(),
+    columns=["Metric", "Value"],
+).to_html(index=False, escape=False)
+```
+
+The important design choice in this project is that deterministic Python analysis happens first. The AI layer is optional and works only from computed summary information.
+
+# Sequence Summary
+
+```{python}
+from src.protein_analysis import build_summary_table
+
+pd.DataFrame(
+    build_summary_table(summary),
+    columns=["Metric", "Value"],
+).to_html(index=False, escape=False)
+```
+
+The summary view highlights a few beginner-friendly checkpoints:
+
+- what kind of input was detected
+- how long the sequence is
+- how many amino acid types are present
+- which amino acid is most common
+
+# App Interface
+
+The Gradio app is structured around two related workflows:
+
+1. analyze one sequence in depth
+2. compare two sequences side by side
+
+It also separates deterministic analysis from optional AI explanation so the learner can see what was computed directly by Python.
+
+::: {.callout-tip}
+## Screenshot Placeholder
+Add a polished app screenshot here after saving:
+`assets/screenshots/single-sequence-analysis.png`
+:::
+
+# Amino Acid Composition
+
+```{python}
+from src.plots import create_composition_chart
+
+create_composition_chart(summary["amino_acid_composition"])
+```
+
+This chart is useful as a descriptive starting point, especially when comparing different sequences. However, composition alone should not be treated as proof of biological function.
+
+## Sequence Fingerprint
+
+```{python}
+from IPython.display import SVG
+from src.sequence_visuals import build_sequence_fingerprint_svg
+
+SVG(build_sequence_fingerprint_svg(summary["cleaned_sequence"]))
+```
+
+This SVG view makes the sequence feel more tangible by coloring residues according to broad biochemical class. It is still a sequence-level visualization, not a structure prediction.
+
+## Top Amino Acids
+
+```{python}
+from src.protein_analysis import build_top_amino_acid_table
+
+pd.DataFrame(
+    build_top_amino_acid_table(summary),
+    columns=["Amino Acid", "Count", "Percentage"],
+).to_html(index=False, escape=False)
+```
+
+## Top Residues Donut
+
+```{python}
+from src.plots import create_top_residues_donut
+
+create_top_residues_donut(summary["amino_acid_composition"])
+```
+
+# Comparison Workflow
+
+The app also supports comparing two sequences side by side. In the current project version, built-in sample sequences are available so users can test the comparison view immediately.
+
+This comparison mode is helpful for spotting broad descriptive differences such as sequence length changes or amino acid enrichment shifts.
+
+```{python}
+from pathlib import Path
+from src.protein_analysis import build_comparison_difference_table, build_comparison_table, compare_protein_sequences
+
+comparison_text = Path("data/example_protein_variant.fasta").read_text()
+comparison = compare_protein_sequences(
+    example_text,
+    comparison_text,
+    "Example Protein",
+    "Example Protein Variant",
+)
+
+pd.DataFrame(
+    build_comparison_table(comparison),
+    columns=["Metric", "Sequence 1", "Sequence 2"],
+).to_html(index=False, escape=False)
+```
+
+```{python}
+pd.DataFrame(
+    build_comparison_difference_table(comparison),
+    columns=["Amino Acid", "Sequence 1 %", "Sequence 2 %", "Difference"],
+).to_html(index=False, escape=False)
+```
+
+## Comparison Delta Chart
+
+```{python}
+from src.plots import create_comparison_delta_chart
+
+create_comparison_delta_chart(comparison)
+```
+
+## Comparison Heatmap
+
+```{python}
+from src.plots import create_comparison_heatmap
+
+create_comparison_heatmap(comparison)
+```
+
+# Optional 3D Structure View
+
+ProteinLens now includes an optional curated 3D structure tab in the app. This is meant to connect sequence-focused learning with structural biology in a careful way, but it should be treated as an advanced extension rather than part of the first-pass core workflow.
+
+Important boundary:
+
+- the 3D structures come from public external references
+- they are not automatically inferred from the pasted sequence
+- they should be treated as educational examples for known proteins
+
+This keeps the project scientifically honest while still allowing a more vivid, interactive exploration layer.
+
+In other words:
+
+- the core learning workflow is still sequence analysis first
+- the 3D tab is a curated reference aid for later exploration
+- the learner does not need the 3D feature to understand the main Python and bioinformatics concepts in this project
+
+Even so, the feature is already present in the current app version as an optional enrichment layer for known proteins.
+
+::: {.callout-tip}
+## Screenshot Placeholder
+Add the comparison screenshot here after saving:
+`assets/screenshots/comparison-view.png`
+:::
+
+Suggested screenshots for the final report:
+
+- `assets/screenshots/single-sequence-analysis.png`
+- `assets/screenshots/ai-explanation-tab.png`
+- `assets/screenshots/comparison-view.png`
+- `assets/screenshots/export-tab.png`
+
+# Biological Interpretation
+
+```{python echo=true}
+from src.protein_analysis import generate_protein_profile
+
+print(generate_protein_profile(summary, protein_name="Example Protein"))
+```
+
+The deterministic interpretation template is intentionally cautious. It gives the learner a language framework for discussing results without overstating what composition analysis can prove.
+
+# AI-assisted Interpretation
+
+The optional AI explanation feature uses summarized sequence statistics rather than raw sensitive inputs by default. This keeps the educational boundary clear:
+
+- Python performs the calculation
+- AI helps explain the result in plain language
+- the learner still needs to verify biological claims manually
+
+::: {.callout-tip}
+## Screenshot Placeholder
+Add the AI explanation screenshot here after saving:
+`assets/screenshots/ai-explanation-tab.png`
+:::
+
+# Export Workflow
+
+The app can export text and JSON summaries for both single-sequence analysis and sequence comparison. This makes the work easier to review, share, and include in a report or portfolio.
+
+::: {.callout-tip}
+## Screenshot Placeholder
+Add the export screenshot here after saving:
+`assets/screenshots/export-tab.png`
+:::
+
+# Drug Target Relevance
+
+At this stage, no database lookup or domain analysis is performed. Any discussion of drug target relevance should be treated as a hypothesis to verify, not as a conclusion.
+
+# Verification Checklist
+
+- Confirm the protein identity using UniProt or another trusted database.
+- Check for known motifs or domains.
+- Compare the sequence with literature before making biological claims.
+- Treat AI-generated explanation as supportive text, not evidence.
+
+# Limitations
+
+- The current workflow focuses on sequence composition only.
+- No alignment, motif search, or structure prediction is included yet.
+- The example data may be synthetic or simplified.
+- AI explanation depends on summarized inputs and should be verified manually.
+
+# Future Improvements
+
+- Embed polished screenshots from the Gradio app
+- Add a more advanced comparison visualization
+- Add optional real-sequence case studies from public databases
+
+# What I Learned
+
+This section should summarize what the student learned about FASTA format, amino acid composition, Python-based parsing, plotting, exportable outputs, and careful scientific interpretation.
+
+Suggested reflection points:
+
+- how FASTA input is parsed in Python
+- why data validation matters before interpretation
+- what composition summaries can and cannot prove
+- how AI explanation differs from deterministic analysis
+- how polished presentation improves the value of a scientific mini project

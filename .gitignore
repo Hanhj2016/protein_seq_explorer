@@ -1,0 +1,11 @@
+.env
+.agents/
+.codex/
+__pycache__/
+*.pyc
+.venv/
+outputs/
+*.db
+.ipynb_checkpoints/
+report.html
+report_files/
