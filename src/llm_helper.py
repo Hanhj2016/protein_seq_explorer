@@ -48,11 +48,16 @@ def format_protein_summary_prompt(summary: dict[str, object], protein_name: str 
 
         The sequence data came from a beginner-friendly protein sequence explorer.
         Provide a cautious explanation in Markdown with these headings:
-        ## Plain-English Summary
-        ## Key Observations
-        ## Possible Biological Interpretation
+        ## Function Summary
+        ## Possible Drug Relevance
+        ## Key Terms To Learn
+        ## Verification Checklist
         ## Limitations
-        ## What to Verify Manually
+        
+        Keep the language beginner-friendly.
+        If the sequence summary alone is not enough to support a claim, say so clearly.
+        Under "Key Terms To Learn", provide 3 to 5 short bullet points.
+        Under "Verification Checklist", provide practical follow-up checks the student can do manually.
         """
     ).strip()
 

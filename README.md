@@ -295,6 +295,7 @@ This 3D view uses curated public reference structures and is not inferred automa
 - `src/structure_viewer.py`: curated 3D reference viewer
 - `notebooks/02_protein_lens.ipynb`: learning notebook
 - `report.qmd`: Quarto report source
+- `TODO.md`: follow-up improvements to revisit later
 
 ## Next Showcase Step
 

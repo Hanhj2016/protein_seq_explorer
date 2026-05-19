@@ -63,6 +63,7 @@ with gr.Blocks(
     with gr.Tabs():
         with gr.Tab("Sequence Summary"):
             summary_highlights_output = gr.HTML(label="Summary Highlights")
+            quality_panel_output = gr.HTML(label="Data Quality and Provenance")
             summary_cards_output = gr.Markdown(label="Quick Summary")
             summary_output = gr.Dataframe(
                 headers=["Metric", "Value"],
@@ -101,10 +102,13 @@ with gr.Blocks(
                 """
                 Optional step: this uses summarized sequence statistics and requires
                 `OPENAI_API_KEY` in a local `.env` file.
+                The AI output is structured as a beginner-friendly profile with:
+                function summary, possible drug relevance, key terms to learn,
+                and a manual verification checklist.
                 """
             )
             generate_ai_button = gr.Button("Generate AI Explanation", variant="primary")
-            ai_output = gr.Markdown(label="AI Explanation")
+            ai_output = gr.Markdown(label="AI Protein Profile")
 
         with gr.Tab("Advanced 3D Reference"):
             gr.Markdown(
@@ -233,6 +237,7 @@ with gr.Blocks(
         outputs=[
             analysis_state,
             summary_highlights_output,
+            quality_panel_output,
             summary_cards_output,
             summary_output,
             top_amino_acids_output,

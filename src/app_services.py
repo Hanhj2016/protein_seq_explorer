@@ -36,8 +36,10 @@ from src.protein_analysis import (
     build_summary_highlights_html,
     build_summary_table,
     build_top_amino_acid_table,
+    clean_protein_sequence,
     compare_protein_sequences,
     generate_protein_profile,
+    parse_fasta,
     summarize_protein_sequence,
 )
 from src.sequence_visuals import build_residue_class_legend_html, build_sequence_fingerprint_svg
@@ -49,6 +51,55 @@ from src.structure_viewer import (
     suggest_structure_choice,
 )
 from src.ui_content import build_report_open_link
+
+
+def _infer_sequence_provenance(cleaned_sequence: str) -> tuple[str, str]:
+    """Infer whether the analyzed sequence matches a built-in example."""
+    _, example_raw_sequence = parse_fasta(EXAMPLE_FASTA_PATH.read_text())
+    example_sequence = clean_protein_sequence(example_raw_sequence)
+    if cleaned_sequence == example_sequence:
+        return ("Built-in example FASTA", "Example data")
+
+    _, variant_raw_sequence = parse_fasta(EXAMPLE_FASTA_VARIANT_PATH.read_text())
+    variant_sequence = clean_protein_sequence(variant_raw_sequence)
+    if cleaned_sequence == variant_sequence:
+        return ("Built-in comparison FASTA variant", "Example data")
+
+    return ("User-provided sequence", "User data")
+
+
+def build_analysis_quality_panel(summary: dict[str, object]) -> str:
+    """Return a visible quality and provenance panel for the app."""
+    sequence_origin, source_badge = _infer_sequence_provenance(summary["cleaned_sequence"])
+    input_type = summary["input_type"]
+    return f"""
+    <section style="
+        padding:16px 18px;
+        border-radius:18px;
+        border:1px solid #d7ebe7;
+        background:linear-gradient(180deg, #f9fffd 0%, #f2fbf8 100%);
+        margin:8px 0 6px 0;
+    ">
+      <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:10px;">
+        <span style="padding:6px 10px; border-radius:999px; background:#ddf7ef; color:#0f766e; font-weight:700; font-size:0.85rem;">
+          {source_badge}
+        </span>
+        <span style="padding:6px 10px; border-radius:999px; background:#edf4ff; color:#1d4ed8; font-weight:700; font-size:0.85rem;">
+          Input: {input_type}
+        </span>
+        <span style="padding:6px 10px; border-radius:999px; background:#fff7db; color:#9a6700; font-weight:700; font-size:0.85rem;">
+          Validation passed
+        </span>
+      </div>
+      <div style="font-weight:700; color:#102a43; margin-bottom:6px;">Data Quality and Provenance</div>
+      <ul style="margin:0; padding-left:18px; color:#243b53;">
+        <li>Sequence source: {sequence_origin}</li>
+        <li>The current sequence uses standard one-letter amino acid codes only.</li>
+        <li>Composition and profile outputs are sequence-level summaries, not proof of structure or function.</li>
+        <li>AI interpretation uses only summarized statistics and should be verified manually.</li>
+      </ul>
+    </section>
+    """
 
 
 def load_example_fasta() -> str:
@@ -89,13 +140,14 @@ def analyze_sequence(sequence_text: str, protein_name: str):
     summary = summarize_protein_sequence(sequence_text)
     residue_legend = build_residue_class_legend_html()
     ai_placeholder = (
-        "AI explanation not generated yet.\n\n"
+        "AI profile not generated yet.\n\n"
         "Use the **Generate AI Explanation** button after running deterministic analysis."
     )
 
     return (
         summary,
         build_summary_highlights_html(summary),
+        build_analysis_quality_panel(summary),
         build_summary_cards(summary),
         build_summary_table(summary),
         build_top_amino_acid_table(summary),

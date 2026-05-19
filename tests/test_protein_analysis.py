@@ -3,7 +3,9 @@
 import unittest
 from pathlib import Path
 
-from src.app_services import export_sequence_results
+from src.app_config import EXAMPLE_FASTA_PATH
+from src.app_services import build_analysis_quality_panel, export_sequence_results
+from src.llm_helper import format_protein_summary_prompt
 from src.protein_analysis import (
     build_comparison_export_text,
     build_summary_export_text,
@@ -126,6 +128,20 @@ class ProteinAnalysisTests(unittest.TestCase):
         html = build_report_open_link(Path("report.html"))
         self.assertIn("/gradio_api/file=report.html", html)
         self.assertIn("Open Rendered Report", html)
+
+    def test_format_protein_summary_prompt_uses_new_profile_sections(self):
+        summary = summarize_protein_sequence("AACC")
+        prompt = format_protein_summary_prompt(summary, "Example Protein")
+        self.assertIn("## Function Summary", prompt)
+        self.assertIn("## Possible Drug Relevance", prompt)
+        self.assertIn("## Key Terms To Learn", prompt)
+        self.assertIn("## Verification Checklist", prompt)
+
+    def test_build_analysis_quality_panel_marks_example_data(self):
+        summary = summarize_protein_sequence(EXAMPLE_FASTA_PATH.read_text())
+        panel_html = build_analysis_quality_panel(summary)
+        self.assertIn("Example data", panel_html)
+        self.assertIn("Validation passed", panel_html)
 
 
 if __name__ == "__main__":
